@@ -23,6 +23,7 @@ readonly DEPLOYMENT_NAME_REGEX="^[-a-z0-9]{3,20}$"
 readonly EVENT_HUB_CONNECTION_STRING_REGEX="^Endpoint=sb:\/\/.*$"
 readonly EVENT_HUB_NAME_REGEX="^[a-zA-Z0-9][a-zA-Z0-9.-]{1,50}$"
 readonly FILTER_CONFIG_REGEX="([^;\s].+?)=([^;]*)"
+readonly ACTIVE_GATE_AUTH_TOKEN_REGEX="^{.*?\"token\":\"(.*?)\".*}$"
 
 print_help()
 {
@@ -140,6 +141,27 @@ check_dynatrace_log_ingest_url() {
     fi
   else
     echo -e "\e[93mWARNING: \e[37mFailed to connect with provided log ingest url ($TARGET_URL) to send a test log. It can be ignored if ActiveGate does not allow public access."
+  fi
+}
+
+generate_auth_token() {
+  if RESPONSE=$(curl -k -s -X POST -d "{\"activeGateType\":\"ENVIRONMENT\",\"seedToken\":false}" "$TARGET_URL/api/v2/activeGateTokens" -w "<<HTTP_CODE>>%{http_code}" -H "accept: application/json; charset=utf-8" -H "Content-Type: application/json; charset=utf-8" -H "Authorization: Api-Token $TARGET_API_TOKEN" --connect-timeout 20); then
+    CODE=$(sed -rn 's/.*<<HTTP_CODE>>(.*)$/\1/p' <<<"$RESPONSE")
+    RESPONSE=$(sed -r 's/(.*)<<HTTP_CODE>>.*$/\1/' <<<"$RESPONSE")
+    if [ "$CODE" -eq 404 ]; then
+      return
+    elif [ "$CODE" -eq 403 ]; then
+      echo -e "\e[91mERROR: \e[37mFailed to receive ActiveGate token due to missing API token required scope (Write ActiveGate tokens). $RESPONSE"
+      exit 1
+    elif [ "$CODE" -ge 400 ]; then
+      echo -e "\e[91mERROR: \e[37mFailed to receive auth token - please verify provided log ingest url ($TARGET_URL) and API token. $RESPONSE"
+      exit 1
+    else
+      AUTH_TOKEN=$(awk '{ sub(/.*\"token\":\"/, ""); sub(/\".*/, ""); print }' <<< "$RESPONSE")
+    fi
+  else
+    echo -e "\e[91mERROR: \e[37mFailed to connect with provided log ingest url ($TARGET_URL) to receive Active Gate token."
+    exit 1
   fi
 }
 
@@ -458,6 +480,10 @@ then
   check_dynatrace_log_ingest_url
 fi
 
+if [[ "${DEPLOY_ACTIVEGATE}" == "true" ]]; then
+  generate_auth_token
+fi
+
 echo "- deploying function infrastructure into Azure..."
 
 az deployment group create \
@@ -472,7 +498,8 @@ requireValidCertificate=${REQUIRE_VALID_CERTIFICATE} \
 selfMonitoringEnabled="${SFM_ENABLED}" \
 deployActiveGateContainer="${DEPLOY_ACTIVEGATE}" \
 targetPaasToken="${TARGET_PAAS_TOKEN}" \
-filterConfig="${FILTER_CONFIG}"
+filterConfig="${FILTER_CONFIG}" \
+authToken="${AUTH_TOKEN}"
 
 if [[ $? != 0 ]]
 then

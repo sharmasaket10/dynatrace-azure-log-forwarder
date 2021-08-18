@@ -72,6 +72,12 @@
             "metadata": {
                 "description": "Filter config"
             }
+        },
+        "authToken": {
+            "type": "string",
+            "metadata": {
+                "description": "ActiveGate token"
+            }
         }
     },
     "variables": {
@@ -234,6 +240,10 @@
                                 {
                                     "name": "DT_ID_SEED_RESOURCENAME",
                                     "value": "[parameters('forwarderName')]"
+                                },
+                                {
+                                    "name": "DT_AUTH_TOKEN",
+                                    "value": "[parameters('authToken')]"
                                 }
                             ],
                             "resources": {
