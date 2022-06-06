@@ -129,7 +129,12 @@ def parse_record(record: Dict, self_monitoring: SelfMonitoring):
     extract_cloud_log_forwarder(parsed_record)
 
     if "resourceId" in record:
-        extract_resource_id_attributes(parsed_record, record["resourceId"])
+        resource_id = record.get("resourceId")
+        extract_resource_id_attributes(parsed_record, resource_id)
+    elif "_ResourceId" in record: #LogAnaltics schema https://docs.microsoft.com/en-us/azure/azure-monitor/logs/log-standard-columns
+        resource_id = record.get("_ResourceId")
+        extract_resource_id_attributes(parsed_record, resource_id)
+
 
     if log_filter.should_filter_out_record(parsed_record):
         return None

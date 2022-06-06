@@ -122,6 +122,22 @@ expected_output_activity_log = {
     "audit.result": "Activated"
 }
 
+default_log_analytics_log = {
+    "_ResourceId": "/subscriptions/97e9b03f-04d6-4b69-b307-35f483f7ed81/resourceGroups/demo-backend-rg/providers/Microsoft.Sql/servers/azure-demo-sql-server"
+}
+
+expected_log_analytics_log = {
+    'azure.resource.group': 'demo-backend-rg',
+    'azure.resource.id': '/subscriptions/97e9b03f-04d6-4b69-b307-35f483f7ed81/resourceGroups/demo-backend-rg/providers/Microsoft.Sql/servers/azure-demo-sql-server',
+    'azure.resource.name': 'azure-demo-sql-server',
+    'azure.resource.type': 'Microsoft.Sql/servers',
+    'azure.subscription': '97e9b03f-04d6-4b69-b307-35f483f7ed81',
+    'cloud.provider': 'Azure',
+    'content': '{"_ResourceId": '
+               '"/subscriptions/97e9b03f-04d6-4b69-b307-35f483f7ed81/resourceGroups/demo-backend-rg/providers/Microsoft.Sql/servers/azure-demo-sql-server"}',
+    'dt.source_entity': 'AZURE_SQL_SERVER-431EDFA4E63CF989',
+    'severity': 'INFO'
+}
 
 def test_default():
     actual_output = main.parse_record(record, SelfMonitoring(execution_time=datetime.utcnow()))
@@ -137,3 +153,7 @@ def test_trimming_attribute_values(monkeypatch: MonkeyPatchFixture):
 def test_default_activity_log():
     actual_output = main.parse_record(default_activity_log, SelfMonitoring(execution_time=datetime.utcnow()))
     assert actual_output == expected_output_activity_log
+
+def test_default_log_analytics():
+    actual_output = main.parse_record(default_log_analytics_log, SelfMonitoring(execution_time=datetime.utcnow()))
+    assert actual_output == expected_log_analytics_log
