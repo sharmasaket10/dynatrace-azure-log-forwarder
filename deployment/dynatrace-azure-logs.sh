@@ -369,6 +369,8 @@ echo "- deploying function zip code into ${FUNCTIONAPP_NAME}..."
 
 sleep 60 # wait some time to allow functionapp to warmup
 
+az webapp config set --name ${FUNCTIONAPP_NAME} --resource-group ${RESOURCE_GROUP} --ftps-state FtpsOnly
+
 az webapp deployment source config-zip  -n ${FUNCTIONAPP_NAME} -g ${RESOURCE_GROUP} --src ${FUNCTION_ZIP_PACKAGE}
 
 if [[ $? != 0 ]]; then
