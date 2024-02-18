@@ -59,7 +59,7 @@
             "type": "bool",
             "defaultValue": false,
             "metadata": {
-                "description": "Should verify Dynatrace Logs Ingest endpoint SSL certificate? true/false"
+                "description": "Should verify Dynatrace Logs Ingest endpoint SSL certificate? true/"
             }
         },
         "resourceTags": {
@@ -473,7 +473,7 @@
                 "hostNamesDisabled": false,
                 "containerSize": 1536,
                 "dailyMemoryTimeQuota": 0,
-                "httpsOnly": false,
+                "httpsOnly": true,
                 "redundancyMode": "None"
             },
             "resources": [
